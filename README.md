@@ -1,3 +1,3 @@
-# Dirt
+# DirtIO
 
-Query language for the TerrariumCAD project
+Query language for the TerrariumCAD project, a project for automating scientific research.
