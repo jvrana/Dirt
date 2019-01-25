@@ -81,5 +81,7 @@ class TestEvent(object):
         start = self.check_plate
         end = self.fragment_analyzing
         G = plans[0].layout.G
+
+        browser.set_verbose(True)
         results = resolve_subgraph(G, start, end, browser)
         print(results)

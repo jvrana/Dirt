@@ -62,6 +62,8 @@ def resolve_query(query, include=None, browser=None, session=None, query_only=Fa
                 assert relation.nested == v['__typename']
                 assert not relation.many
                 include[relation.data_key] = dict()
+
+
                 filtered_query[relation.ref] = getattr(nested_model, relation.attr)
         else:
             filtered_query[k] = v
@@ -75,6 +77,7 @@ def resolve_query(query, include=None, browser=None, session=None, query_only=Fa
 
 def resolve_model(model, query, session=None, browser=None, with_reason=False):
     filtered_query = resolve_query(query, session=session, browser=browser, query_only=True)
+    # filtered_query = query
     model_type = ModelRegistry.get_model(query['__typename'])
     passes = {"passes": True, "reasons": []}
     if not issubclass(type(model), model_type):
@@ -82,7 +85,7 @@ def resolve_model(model, query, session=None, browser=None, with_reason=False):
         passes['reasons'].append("'{}' is not the __typename '{}'"
                                  " specified in the query".format(type(model), query['__typename']))
     for k, v in filtered_query.items():
-        if v != getattr(model, k):
+        if hasattr(model, k) and v != getattr(model, k):
             passes['passes'] = False
             passes['reasons'].append("model.{}={}, but was supposed to be {}".format(k, getattr(model, k), v))
     if with_reason:
@@ -93,7 +96,6 @@ def resolve_model(model, query, session=None, browser=None, with_reason=False):
 
 def filter_models(models, query, browser=None, session=None):
     browser = _get_browser(browser, session)
-    browser.recursive_retrieve(models, query, strict=False)
     return [m for m in models if resolve_model(m, query, session=session, browser=browser)]
 
 
@@ -128,6 +130,9 @@ def resolve_subgraph(opgraph, start_query, end_query, browser, depth=None):
     allops = [_from_g(G, nid, 'operation') for nid in opgraph.nodes]
     browser.recursive_retrieve(allops, start_query, strict=False)
     browser.recursive_retrieve(allops, end_query, strict=False)
+
+    # filtered_start_query = resolve_query(start_query, session=None, browser=browser, query_only=True)
+    # filtered_end_query = resolve_query(end_query, session=None, browser=browser, query_only=True)
 
     starts = filter_models(allops, start_query, browser=browser)
     ends = filter_models(allops, end_query, browser=browser)
